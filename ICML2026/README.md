@@ -1,4 +1,4 @@
-# ICML 20265 OpenReview Matcher
+# ICML 2026 OpenReview Matcher
 
 `matching.sh` will carry out the ICML 2026 reviewer-submission matching process end-to-end.
 
