@@ -62,6 +62,9 @@ start_time=$SECONDS
 # -------------------------------- Edit these variables --------------------------------
 
 export DEBUG=False # Used to subsample submission and reviewer data
+export EXPERIMENT=True # Experimental Manipulation
+export FLIP_RATE=0.1 # Ratio of "Okay with Policy B" Papers to be flipped to Policy A.
+export FILTER_UNREGISTERED=False # Filter out unregistered reviewers (Set to False for testing)
 
 # ICML26: TODO - check Q values
 export Q=.7
@@ -111,6 +114,8 @@ if [ -z "$SLURM_JOB_NAME" ] && [ -z "$SLURM_JOB_ID" ]; then
     # Local execution (not running under SLURM or in an interactive session)
     export ROOT_FOLDER="ICML2026/$GROUP"
     export DATA_FOLDER="ICML2026/$GROUP/data"
+	export REVIEWER_FILE="reviewer.csv"
+	export SUBMISSION_FILE="submission.csv"
 	export ITER1_DATA_FOLDER="ICML2026/$GROUP/iter1_data"
 	export ITER2_DATA_FOLDER="ICML2026/$GROUP/iter2_data"
 	export ITER3_DATA_FOLDER="ICML2026/$GROUP/iter3_data"
@@ -121,6 +126,8 @@ elif [ -z "$SLURM_JOB_NAME" ]; then
     # Interactive session
     export ROOT_FOLDER="ICML2026/$GROUP"
     export DATA_FOLDER="ICML2026/$GROUP/data"
+	export REVIEWER_FILE="reviewer.csv"
+	export SUBMISSION_FILE="submission.csv"
 	export ITER1_DATA_FOLDER="ICML2026/$GROUP/iter1_data"
 	export ITER2_DATA_FOLDER="ICML2026/$GROUP/iter2_data"
 	export ITER3_DATA_FOLDER="ICML2026/$GROUP/iter3_data"
@@ -131,6 +138,8 @@ else
     # sbatch job
     export ROOT_FOLDER="ICML2026/$GROUP/jobs/$SLURM_JOB_ID"
     export DATA_FOLDER="ICML2026/$GROUP/jobs/$SLURM_JOB_ID/data"
+	export REVIEWER_FILE="reviewer.csv"
+	export SUBMISSION_FILE="submission.csv"
 	export ITER1_DATA_FOLDER="ICML2026/$GROUP/jobs/$SLURM_JOB_ID/iter1_data"
 	export ITER2_DATA_FOLDER="ICML2026/$GROUP/jobs/$SLURM_JOB_ID/iter2_data"
 	export ITER3_DATA_FOLDER="ICML2026/$GROUP/jobs/$SLURM_JOB_ID/iter3_data"
@@ -158,7 +167,7 @@ mkdir -p $ITER3_ASSIGNMENTS_FOLDER # create the output folder
 # 	ICML2026/$GROUP/reciprocal-reviewer-noBid.csv \
 # 	ICML2026/$GROUP/colluders.csv \
 # 	ICML2026/$GROUP/$SCORES_FILE
-for file in $DATA_FOLDER//bids.csv \
+for file in $DATA_FOLDER/bids.csv \
 	$DATA_FOLDER/emergency-4plus-reviewers.csv \
 	$DATA_FOLDER/reciprocal-reviewer-noBid.csv 
 do
@@ -203,6 +212,43 @@ printf "\nASSIGNMENTS_FOLDER: $ITER1_ASSIGNMENTS_FOLDER"
 # cp ICML2026/$GROUP/$SCORES_FILE $ROOT_FOLDER/scores.csv
 
 
+printf "\n\n\n----------------------------------------"
+printf "\nSanitizing and preparing data..."
+printf "\n----------------------------------------\n"
+
+
+# ICML26: Experimental Manipulation - Flip some papers from Policy B to Policy A
+# NOTE: submission.csv will be overwritten, and the original file will be saved with the suffix "_original".
+if [ "$EXPERIMENT" = "True" ]; then
+	printf "\n----------------------------------------"
+	printf "\nEXPERIMENTAL MANIPULATION: Flipping papers from Policy B to Policy A..."
+
+	cp $DATA_FOLDER/submission.csv $DATA_FOLDER/submission_flipped.csv
+	export SUBMISSION_FILE="submission_flipped.csv"
+
+	python ICML2026/scripts/flip_paper_policy.py \
+		--match_group $GROUP \
+		--submission $DATA_FOLDER/$SUBMISSION_FILE\
+		--flip_rate $FLIP_RATE
+fi
+
+
+# ICML26: Get rid of reviewers that have not registered
+cp $DATA_FOLDER/reviewer.csv $DATA_FOLDER/reviewer_filtered.csv
+export REVIEWER_FILE="reviewer_filtered.csv"
+
+python ICML2026/scripts/filter_reviewers.py \
+	--reviewer $DATA_FOLDER/$REVIEWER_FILE \
+		--output $DATA_FOLDER/unregistered_reviewers.csv \
+		--filter_unregistered $FILTER_UNREGISTERED
+
+
+
+
+
+
+
+
 
 
 
@@ -243,6 +289,7 @@ print_time $((SECONDS - start_time))
 # 	--output $ITER1_DATA_FOLDER/constraints/conflict_constraints.csv
 
 
+
 # If in DEBUG mode, subsample the scores, bids, and constraints. Will overwrite the
 # original files.
 if [ "$DEBUG" = "True" ]; then
@@ -259,10 +306,10 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/exclude_reviewers.py \
 	--exclude_reviewer_files $ITER1_DATA_FOLDER/emergency-4plus-reviewers.csv \
 		$ITER1_DATA_FOLDER/reciprocal-reviewer-noBid.csv \
-	--files $ITER1_DATA_FOLDER//affinity_scores.csv \
-		$ITER1_DATA_FOLDER/bids.csv \
+		$ITER1_DATA_FOLDER/unregistered_reviewers.csv \
+	--files $ITER1_DATA_FOLDER/affinity_scores.csv \
+		$ITER1_DATA_FOLDER/filtered_bids.csv \
 		$ITER1_DATA_FOLDER/constraints/conflict_constraints.csv
-
 
 
 # ---------------------------------------------------------------------------------
@@ -335,6 +382,13 @@ print_time $((SECONDS - start_time))
 # 	--output $ITER1_DATA_FOLDER/constraints/geographical_constraints.csv
 # print_time $((SECONDS - start_time))
 
+
+printf "\n----------------------------------------"
+python ICML2026/scripts/country_constraints.py \
+	--assignments $ITER1_ASSIGNMENTS_FOLDER/first_matching.json \
+	--reviewer $ITER1_DATA_FOLDER/$REVIEWER_FILE \
+	--output $ITER1_DATA_FOLDER/constraints/country_constraints.csv
+
 # Remove emergency reviewers and reviewers without more reviews left before the
 # second matching.
 printf "\n----------------------------------------"
@@ -342,9 +396,11 @@ python ICML2026/scripts/exclude_reviewers.py \
 	--exclude_reviewer_files $ITER1_DATA_FOLDER/emergency-4plus-reviewers.csv \
 		$ITER1_DATA_FOLDER/reciprocal-reviewer-noBid.csv \
 		$ITER1_DATA_FOLDER/exhausted_reviewers.csv \
+		$ITER1_DATA_FOLDER/unregistered_reviewers.csv \
 	--files $ITER1_DATA_FOLDER/affinity_scores.csv \
 		$ITER1_DATA_FOLDER/filtered_bids.csv \
 		$ITER1_DATA_FOLDER/constraints/conflict_constraints.csv \
+		$ITER1_DATA_FOLDER/constraints/country_constraints.csv \
 		$ITER1_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv
 
 # If in DEBUG mode, subsample the new constraints. Will overwrite the original files.
@@ -360,6 +416,7 @@ fi
 printf "\n----------------------------------------"
 python ICML2026/scripts/join_constraints.py \
 	--files $ITER1_DATA_FOLDER/constraints/conflict_constraints.csv \
+		$ITER1_DATA_FOLDER/constraints/country_constraints.csv \
 		$ITER1_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv \
 	--output $ITER1_DATA_FOLDER/constraints/constraints_for_second_matching.csv
 print_time $((SECONDS - start_time))
@@ -407,6 +464,12 @@ python ICML2026/scripts/join_assignments.py \
 		$ITER1_ASSIGNMENTS_FOLDER/second_matching.csv \
 	--output $ITER1_ASSIGNMENTS_FOLDER/final_assignments.csv
 
+# get updated policy for reviewers
+python ICML2026/scripts/get_updated_reviewer_policy.py \
+	--assignments $ITER1_ASSIGNMENTS_FOLDER/final_assignments.csv \
+	--reviewer $ITER1_DATA_FOLDER/$REVIEWER_FILE \
+	--submission $ITER1_DATA_FOLDER/$SUBMISSION_FILE \
+	--output $ITER1_ASSIGNMENTS_FOLDER/updated_reviewer_policy.csv
 
 python ICML2026/scripts/evaluate_assignments.py \
 	--assignments $ITER1_ASSIGNMENTS_FOLDER/final_assignments.csv \
@@ -470,8 +533,8 @@ print_time $((SECONDS - start_time))
 printf "\n----------------------------------------"
 python ICML2026/scripts/fetch_policy_constraints.py \
 	--match_group $GROUP \
-	--submission $ITER2_DATA_FOLDER/submission.csv \
-	--reviewer $ITER2_DATA_FOLDER/reviewer.csv \
+	--submission $ITER2_DATA_FOLDER/$SUBMISSION_FILE \
+	--reviewer $ITER2_DATA_FOLDER/$REVIEWER_FILE \
 	--outputs $ITER2_DATA_FOLDER/constraints/hard_policy_constraints.csv \
 			$ITER2_DATA_FOLDER/constraints/soft_policy_constraints.csv
 
@@ -493,8 +556,9 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/exclude_reviewers.py \
 	--exclude_reviewer_files $ITER2_DATA_FOLDER/emergency-4plus-reviewers.csv \
 		$ITER2_DATA_FOLDER/reciprocal-reviewer-noBid.csv \
-	--files $ITER2_DATA_FOLDER//affinity_scores.csv \
-		$ITER2_DATA_FOLDER/bids.csv \
+		$ITER2_DATA_FOLDER/unregistered_reviewers.csv \
+	--files $ITER2_DATA_FOLDER/affinity_scores.csv \
+		$ITER2_DATA_FOLDER/filtered_bids.csv \
 		$ITER2_DATA_FOLDER/constraints/conflict_constraints.csv \
 		$ITER2_DATA_FOLDER/constraints/hard_policy_constraints.csv \
 		$ITER2_DATA_FOLDER/constraints/soft_policy_constraints.csv
@@ -562,6 +626,14 @@ print_time $((SECONDS - start_time))
 # 	--output $ITER2_DATA_FOLDER/constraints/geographical_constraints.csv
 # print_time $((SECONDS - start_time))
 
+
+printf "\n----------------------------------------"
+python ICML2026/scripts/country_constraints.py \
+	--assignments $ITER2_ASSIGNMENTS_FOLDER/first_matching.json \
+	--reviewer $ITER2_DATA_FOLDER/$REVIEWER_FILE \
+	--output $ITER2_DATA_FOLDER/constraints/country_constraints.csv
+
+
 # Remove emergency reviewers and reviewers without more reviews left before the
 # second matching.
 printf "\n----------------------------------------"
@@ -569,9 +641,11 @@ python ICML2026/scripts/exclude_reviewers.py \
 	--exclude_reviewer_files $ITER2_DATA_FOLDER/emergency-4plus-reviewers.csv \
 		$ITER2_DATA_FOLDER/reciprocal-reviewer-noBid.csv \
 		$ITER2_DATA_FOLDER/exhausted_reviewers.csv \
+		$ITER2_DATA_FOLDER/unregistered_reviewers.csv \
 	--files $ITER2_DATA_FOLDER/affinity_scores.csv \
 		$ITER2_DATA_FOLDER/filtered_bids.csv \
 		$ITER2_DATA_FOLDER/constraints/agg_constraints.csv \
+		$ITER2_DATA_FOLDER/constraints/country_constraints.csv \
 		$ITER2_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv
 
 # If in DEBUG mode, subsample the new constraints. Will overwrite the original files.
@@ -587,6 +661,7 @@ fi
 printf "\n----------------------------------------"
 python ICML2026/scripts/join_constraints.py \
 	--files $ITER2_DATA_FOLDER/constraints/agg_constraints.csv \
+		$ITER2_DATA_FOLDER/constraints/country_constraints.csv \
 		$ITER2_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv \
 	--output $ITER2_DATA_FOLDER/constraints/constraints_for_second_matching.csv
 print_time $((SECONDS - start_time))
@@ -634,6 +709,12 @@ python ICML2026/scripts/join_assignments.py \
 		$ITER2_ASSIGNMENTS_FOLDER/second_matching.csv \
 	--output $ITER2_ASSIGNMENTS_FOLDER/final_assignments.csv
 
+# get updated policy for reviewers
+python ICML2026/scripts/get_updated_reviewer_policy.py \
+	--assignments $ITER2_ASSIGNMENTS_FOLDER/final_assignments.csv \
+	--reviewer $ITER2_DATA_FOLDER/$REVIEWER_FILE \
+	--submission $ITER2_DATA_FOLDER/$SUBMISSION_FILE \
+	--output $ITER2_ASSIGNMENTS_FOLDER/updated_reviewer_policy.csv
 
 python ICML2026/scripts/evaluate_assignments.py \
 	--assignments $ITER2_ASSIGNMENTS_FOLDER/final_assignments.csv \
@@ -698,8 +779,8 @@ print_time $((SECONDS - start_time))
 printf "\n----------------------------------------"
 python ICML2026/scripts/fetch_policy_constraints.py \
 	--match_group $GROUP \
-	--submission $ITER3_DATA_FOLDER/submission.csv \
-	--reviewer $ITER3_DATA_FOLDER/reviewer.csv \
+	--submission $ITER3_DATA_FOLDER/$SUBMISSION_FILE \
+	--reviewer $ITER3_DATA_FOLDER/$REVIEWER_FILE \
 	--outputs $ITER3_DATA_FOLDER/constraints/hard_policy_constraints.csv \
 			$ITER3_DATA_FOLDER/constraints/soft_policy_constraints.csv
 
@@ -721,8 +802,9 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/exclude_reviewers.py \
 	--exclude_reviewer_files $ITER3_DATA_FOLDER/emergency-4plus-reviewers.csv \
 		$ITER3_DATA_FOLDER/reciprocal-reviewer-noBid.csv \
-	--files $ITER3_DATA_FOLDER//affinity_scores.csv \
-		$ITER3_DATA_FOLDER/bids.csv \
+		$ITER3_DATA_FOLDER/unregistered_reviewers.csv \
+	--files $ITER3_DATA_FOLDER/affinity_scores.csv \
+		$ITER3_DATA_FOLDER/filtered_bids.csv \
 		$ITER3_DATA_FOLDER/constraints/conflict_constraints.csv \
 		$ITER3_DATA_FOLDER/constraints/hard_policy_constraints.csv \
 		$ITER3_DATA_FOLDER/constraints/soft_policy_constraints.csv
@@ -790,6 +872,14 @@ print_time $((SECONDS - start_time))
 # 	--output $ITER3_DATA_FOLDER/constraints/geographical_constraints.csv
 # print_time $((SECONDS - start_time))
 
+printf "\n----------------------------------------"
+python ICML2026/scripts/country_constraints.py \
+	--assignments $ITER3_ASSIGNMENTS_FOLDER/first_matching.json \
+	--reviewer $ITER3_DATA_FOLDER/$REVIEWER_FILE \
+	--output $ITER3_DATA_FOLDER/constraints/country_constraints.csv
+
+
+
 # Remove emergency reviewers and reviewers without more reviews left before the
 # second matching.
 printf "\n----------------------------------------"
@@ -797,9 +887,11 @@ python ICML2026/scripts/exclude_reviewers.py \
 	--exclude_reviewer_files $ITER3_DATA_FOLDER/emergency-4plus-reviewers.csv \
 		$ITER3_DATA_FOLDER/reciprocal-reviewer-noBid.csv \
 		$ITER3_DATA_FOLDER/exhausted_reviewers.csv \
+		$ITER3_DATA_FOLDER/unregistered_reviewers.csv \
 	--files $ITER3_DATA_FOLDER/affinity_scores.csv \
 		$ITER3_DATA_FOLDER/filtered_bids.csv \
 		$ITER3_DATA_FOLDER/constraints/agg_constraints.csv \
+		$ITER3_DATA_FOLDER/constraints/country_constraints.csv \
 		$ITER3_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv
 
 # If in DEBUG mode, subsample the new constraints. Will overwrite the original files.
@@ -808,7 +900,8 @@ if [ "$DEBUG" = "True" ]; then
 	python ICML2026/scripts/subsample.py \
 	--scores $ITER3_DATA_FOLDER/affinity_scores.csv \
 	--files $ITER3_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
-		$ITER3_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv
+		$ITER3_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv \
+		$ITER3_DATA_FOLDER/constraints/country_constraints.csv
 fi
 
 # Join constraints into a single file
@@ -816,6 +909,7 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/join_constraints.py \
 	--files $ITER3_DATA_FOLDER/constraints/agg_constraints.csv \
 		$ITER3_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv \
+		$ITER3_DATA_FOLDER/constraints/country_constraints.csv \
 	--output $ITER3_DATA_FOLDER/constraints/constraints_for_second_matching.csv
 print_time $((SECONDS - start_time))
 
@@ -862,6 +956,12 @@ python ICML2026/scripts/join_assignments.py \
 		$ITER3_ASSIGNMENTS_FOLDER/second_matching.csv \
 	--output $ITER3_ASSIGNMENTS_FOLDER/final_assignments.csv
 
+# get updated policy for reviewers
+python ICML2026/scripts/get_updated_reviewer_policy.py \
+	--assignments $ITER3_ASSIGNMENTS_FOLDER/final_assignments.csv \
+	--reviewer $ITER3_DATA_FOLDER/$REVIEWER_FILE \
+	--submission $ITER3_DATA_FOLDER/$SUBMISSION_FILE \
+	--output $ITER3_ASSIGNMENTS_FOLDER/updated_reviewer_policy.csv
 
 python ICML2026/scripts/evaluate_assignments.py \
 	--assignments $ITER3_ASSIGNMENTS_FOLDER/final_assignments.csv \
