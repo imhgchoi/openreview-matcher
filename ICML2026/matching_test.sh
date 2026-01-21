@@ -64,7 +64,7 @@ start_time=$SECONDS
 export DEBUG=False # Used to subsample submission and reviewer data
 
 # ICML26: TODO - check Q values
-export Q=.55 
+export Q=.7
 export SCORES_FILE=affinity_scores.csv
 
 
@@ -76,7 +76,7 @@ export SCORES_FILE=affinity_scores.csv
 # export Q=0.55
 # export SCORES_FILE=least_conservative.csv
 
-# # Moderately conservative: .825, .7, .7
+# # Moderately conservative: .825, .7, .7 (USED IN ICML 2025)
 # export Q=0.7
 # export SCORES_FILE=moderately_conservative.csv
 
