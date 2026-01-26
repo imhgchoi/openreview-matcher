@@ -339,6 +339,7 @@ python -m matcher \
 	--constraints $ITER1_DATA_FOLDER/constraints/conflict_constraints.csv \
 	--min_papers_default 0 \
 	--max_papers_default $MAX_PAPERS \
+	--quota $ITER1_DATA_FOLDER/quota.csv \
 	--num_reviewers $(($NUM_REVIEWS - 1)) \
 	--solver Randomized \
 	--allow_zero_score_assignments \
@@ -369,6 +370,7 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/reviewer_supply_after_matching.py \
 	--assignments $ITER1_ASSIGNMENTS_FOLDER/first_matching.json \
 	--max_papers $MAX_PAPERS \
+	--quota $ITER1_DATA_FOLDER/quota.csv \
 	--supply_output $ITER1_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
 	--exhausted_reviewers_output $ITER1_DATA_FOLDER/exhausted_reviewers.csv \
 	--remaining_reviewer_constraints_output $ITER1_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv
@@ -583,6 +585,7 @@ python -m matcher \
 	--constraints $ITER2_DATA_FOLDER/constraints/agg_constraints.csv \
 	--min_papers_default 0 \
 	--max_papers_default $MAX_PAPERS \
+	--quota $ITER2_DATA_FOLDER/quota.csv \
 	--num_reviewers $(($NUM_REVIEWS - 1)) \
 	--solver Randomized \
 	--allow_zero_score_assignments \
@@ -613,6 +616,7 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/reviewer_supply_after_matching.py \
 	--assignments $ITER2_ASSIGNMENTS_FOLDER/first_matching.json \
 	--max_papers $MAX_PAPERS \
+	--quota $ITER2_DATA_FOLDER/quota.csv \
 	--supply_output $ITER2_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
 	--exhausted_reviewers_output $ITER2_DATA_FOLDER/exhausted_reviewers.csv \
 	--remaining_reviewer_constraints_output $ITER2_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv
@@ -829,6 +833,7 @@ python -m matcher \
 	--constraints $ITER3_DATA_FOLDER/constraints/agg_constraints.csv \
 	--min_papers_default 0 \
 	--max_papers_default $MAX_PAPERS \
+	--quota $ITER3_DATA_FOLDER/quota.csv \
 	--num_reviewers $(($NUM_REVIEWS - 1)) \
 	--solver Randomized \
 	--allow_zero_score_assignments \
@@ -859,6 +864,7 @@ printf "\n----------------------------------------"
 python ICML2026/scripts/reviewer_supply_after_matching.py \
 	--assignments $ITER3_ASSIGNMENTS_FOLDER/first_matching.json \
 	--max_papers $MAX_PAPERS \
+	--quota $ITER3_DATA_FOLDER/quota.csv \
 	--supply_output $ITER3_DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
 	--exhausted_reviewers_output $ITER3_DATA_FOLDER/exhausted_reviewers.csv \
 	--remaining_reviewer_constraints_output $ITER3_DATA_FOLDER/constraints/remaining_reviewer_constraints.csv

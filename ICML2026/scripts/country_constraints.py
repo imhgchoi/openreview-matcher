@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+import numpy as np
 import openreview
 import os
 from tqdm import tqdm

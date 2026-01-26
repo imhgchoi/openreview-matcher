@@ -14,7 +14,8 @@ Reviewers - data/ - constraints/ - conflict_constraints.csv (<- conflict_test.cs
                   - bids.csv  (<- bid_test.csv)
                   - affinity_scores.csv  (<- affinity_score_test.csv)
                   - submission.csv   (<- paper_test.csv)
-                  - reviewer.csv   (<- reviewer_test.csv)
+                  - reviewer.csv   (<- reviewer_test.csv)'
+                  - quota.csv    (<- quota_test.csv)
                   - emergency-4plus-reviewers.csv  (create a blank file for now)
                   - reciprocal-reviewer-noBid.csv  (create a blank file for now)
 ``` 

@@ -54,6 +54,15 @@ parser.add_argument(
         e.g. "reviewer1,2""",
 )
 
+parser.add_argument(
+    "--quota",
+    help="""
+        quota file (CSV with header row),
+        with each row containing comma-separated user, and quota (max papers) that can be assigned to this user.
+        The first row should be a header (e.g., "user,quota").
+        e.g. "~Reviewer1,2"
+    """,
+)
 
 parser.add_argument("--weights", nargs="+", type=float)
 parser.add_argument("--min_papers_default", default=0, type=int)
@@ -222,6 +231,28 @@ if args.max_papers:
     if missing_reviewers:
         logger.info(
             "Reviewers missing in all score files: " + ", ".join(profile_id)
+        )
+
+if args.quota:
+    missing_reviewers = []
+    with open(args.quota) as file_handle:
+        reader = csv.reader(file_handle)
+        # Skip header row
+        next(reader, None)
+        for idx, row in enumerate(reader):
+            if len(row) < 2:
+                continue
+            profile_id = row[0].strip()
+            quota = int(row[1].strip())
+
+            if profile_id in reviewers:
+                reviewer_idx = reviewers.index(profile_id)
+                maximums[reviewer_idx] = quota
+            else:
+                missing_reviewers.append(profile_id)
+    if missing_reviewers:
+        logger.info(
+            "Reviewers in quota file missing in all score files: " + ", ".join(missing_reviewers)
         )
 
 demands = [args.num_reviewers] * len(papers)
