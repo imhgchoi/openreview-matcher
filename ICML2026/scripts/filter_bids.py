@@ -23,7 +23,7 @@ if __name__ == "__main__":
         "Low": -1,
         "Neutral": 0,
         "High": 1,
-        "Very High": 2,
+        "Very High": 2
     }
     df['bid'] = df['bid'].map(bid_to_num)
     

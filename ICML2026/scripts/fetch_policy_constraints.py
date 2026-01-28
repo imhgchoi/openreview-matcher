@@ -61,7 +61,7 @@ if __name__ == "__main__":
                     # soft constraint
                     if reviewer_id not in policy_a_authors:
                         soft_constraints.append((submission_id, reviewer_id, -1))
-
+    
     # Write constraints file
     if hard_constraints:
         df = pd.DataFrame(hard_constraints)

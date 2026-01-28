@@ -159,6 +159,7 @@ weight_by_type = {
 
 scores_by_type = {score_file: {"edges": []} for score_file in args.scores}
 
+conflict_bids = []
 for score_file in args.scores:
     logger.info("processing file={}".format(score_file))
     file_reviewers = []
@@ -170,17 +171,19 @@ for score_file in args.scores:
             paper_id = row[0].strip()
             profile_id = row[1].strip()
             score = row[2].strip()
+            if score == '': # This means the reviewer bidded "Conflict" for the paper -- add this to the constraints
+                conflict_bids.append((paper_id, profile_id, -1))
+                continue
 
             file_reviewers.append(profile_id)
             file_papers.append(paper_id)
             scores_by_type[score_file]["edges"].append(
                 (paper_id, profile_id, score)
             )
-
     reviewer_set.update(file_reviewers)
     paper_set.update(file_papers)
 
-constraints = []
+constraints = conflict_bids + []
 if args.constraints:
     with open(args.constraints) as file_handle:
         for row in csv.reader(file_handle):

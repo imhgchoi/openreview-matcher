@@ -5,7 +5,10 @@ import numpy as np
 
 def process_file(file):
     """Reads a CSV file."""
-    return pd.read_csv(file, header=None)
+    try:
+        return pd.read_csv(file, header=None)
+    except: # constraint file is empty
+        return None
 
 def aggregate(df):
     # If there is any constraint (-1), the final value is -1
@@ -31,7 +34,8 @@ if __name__ == "__main__":
     # Read and merge all files using ThreadPoolExecutor for parallel processing
     with ThreadPoolExecutor() as executor:
         dfs = list(executor.map(process_file, args.files))
-
+    dfs = [df for df in dfs if df is not None]
+    
     num_constraints_per_file = [len(df) for df in dfs]
     print(f"Loaded {num_constraints_per_file} constraints for each file.")
 
