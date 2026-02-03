@@ -56,6 +56,47 @@ print_time() {
 start_time=$SECONDS
 
 # ----------------------------------------------------------------------------------
+# Multi-threading Configuration
+# ----------------------------------------------------------------------------------
+
+# Determine number of CPU threads to use
+if [ -n "$SLURM_CPUS_PER_TASK" ]; then
+	# Use SLURM allocation if available
+	export NUM_THREADS=$SLURM_CPUS_PER_TASK
+elif [ -n "$OMP_NUM_THREADS" ]; then
+	# Use existing OMP_NUM_THREADS if set
+	export NUM_THREADS=$OMP_NUM_THREADS
+else
+	# Default to number of CPU cores available
+	export NUM_THREADS=$(nproc 2>/dev/null || echo 4)
+fi
+
+printf "\n----------------------------------------"
+printf "\nMulti-threading Configuration"
+printf "\n----------------------------------------"
+printf "\nUsing $NUM_THREADS CPU threads"
+
+# Set environment variables for Python libraries to use multiple threads
+export OMP_NUM_THREADS=$NUM_THREADS          # OpenMP (used by NumPy, SciPy)
+export MKL_NUM_THREADS=$NUM_THREADS           # Intel MKL
+export NUMEXPR_NUM_THREADS=$NUM_THREADS       # NumExpr
+export OPENBLAS_NUM_THREADS=$NUM_THREADS      # OpenBLAS
+export VECLIB_MAXIMUM_THREADS=$NUM_THREADS    # macOS Accelerate framework
+export NUMBA_NUM_THREADS=$NUM_THREADS          # Numba
+export MKL_DYNAMIC=FALSE                      # Disable dynamic thread adjustment
+export OMP_DYNAMIC=FALSE                       # Disable dynamic thread adjustment
+
+# For pandas operations
+export PANDAS_NUM_THREADS=$NUM_THREADS
+
+# For Gurobi solver (if used)
+export GRB_ISV_NAME="ICML2026"
+export GUROBI_NUM_THREADS=$NUM_THREADS
+
+printf "\nEnvironment variables set for multi-threading"
+printf "\n----------------------------------------\n"
+
+# ----------------------------------------------------------------------------------
 # Hyper-parameters
 # ----------------------------------------------------------------------------------
 
@@ -106,7 +147,7 @@ export OPENREVIEW_PASSWORD=''
 
 # ---------------------------- Do not edit these variables ----------------------------
 
-export GROUP="Reviewers_Position"
+export GROUP="Reviewers_Main"
 
 export MAX_PAPERS=5 # Maximum number of papers each reviewer can review
 export NUM_REVIEWS=4 # Number of reviewers per paper

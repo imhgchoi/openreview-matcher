@@ -17,13 +17,16 @@ if __name__ == "__main__":
     # Convert bid column to numeric, coercing any non-numeric values to NaN
 
     # ICML26: Convert bid to numeric
-    # df["bid"] = pd.to_numeric(df["bid"], errors="coerce")
+    # Using replace() is more efficient than map() for dictionary replacements
+    
+    print("Converting bid values to numeric...")
     bid_to_num = {
-        "Very Low": -2,
-        "Low": -1,
+        "Very Low": -1,
+        "Low": -0.9,
         "Neutral": 0,
-        "High": 1,
-        "Very High": 2
+        "High": 0.9,
+        "Very High": 1,
+        # "Conflict": -10
     }
     df['bid'] = df['bid'].map(bid_to_num)
     
@@ -37,7 +40,7 @@ if __name__ == "__main__":
     num_nulled_reviewers = num_bidding_reviewers - len(pos_bids)
 
     # Keep only the positive bids from reviewers with at least min-pos-bids
-    # Keep the negative bids from everyone (this includes the "Conflict" bids)
+    # Keep the negative bids from everyone (this does NOT include the "Conflict" bids -- will be handled separately)
     filtered_bids = df[df["reviewer_id"].isin(pos_bids.index) | (df["bid"] < 0)]
     print(f"Filtered out bids from {num_nulled_reviewers} reviewers.")
 

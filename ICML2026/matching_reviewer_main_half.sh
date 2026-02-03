@@ -61,7 +61,7 @@ start_time=$SECONDS
 
 # -------------------------------- Edit these variables --------------------------------
 
-export DEBUG=False # Used to subsample submission and reviewer data
+export DEBUG=True # Used to subsample submission and reviewer data
 export EXPERIMENT=True # Experimental Manipulation
 export FLIP_RATE=0.1 # Ratio of "Okay with Policy B" Papers to be flipped to Policy A.
 export FILTER_UNREGISTERED=True # Filter out unregistered reviewers (Set to False for testing)
@@ -106,7 +106,7 @@ export OPENREVIEW_PASSWORD=''
 
 # ---------------------------- Do not edit these variables ----------------------------
 
-export GROUP="Reviewers_Position"
+export GROUP="Reviewers_Main_Half"
 
 export MAX_PAPERS=5 # Maximum number of papers each reviewer can review
 export NUM_REVIEWS=4 # Number of reviewers per paper
@@ -278,14 +278,6 @@ printf "\n----------------------------------------"
 printf "\nPre-processing data..."
 printf "\n----------------------------------------\n"
 
-# TODO: Filter out suspicious bids
-
-# Filter out bids from reviewers that do not have at least MIN_POS_BIDS positive bids
-python ICML2026/scripts/filter_bids.py \
-	--input $ITER1_DATA_FOLDER/bids.csv \
-	--output $ITER1_DATA_FOLDER/filtered_bids.csv \
-	--min-pos-bids $MIN_POS_BIDS
-print_time $((SECONDS - start_time))
 
 # ICML26: TODO - check if this is needed
 # Prepare conflict constraints
@@ -294,6 +286,12 @@ print_time $((SECONDS - start_time))
 # 	--match_group $GROUP \
 # 	--output $ITER1_DATA_FOLDER/constraints/conflict_constraints.csv
 
+# Filter out bids from reviewers that do not have at least MIN_POS_BIDS positive bids
+python ICML2026/scripts/filter_bids.py \
+	--input $ITER1_DATA_FOLDER/bids.csv \
+	--output $ITER1_DATA_FOLDER/filtered_bids.csv \
+	--min-pos-bids $MIN_POS_BIDS
+print_time $((SECONDS - start_time))
 
 
 # If in DEBUG mode, subsample the scores, bids, and constraints. Will overwrite the
@@ -302,6 +300,7 @@ if [ "$DEBUG" = "True" ]; then
 	printf "\n----------------------------------------"
 	python ICML2026/scripts/subsample.py \
 	--scores $ITER1_DATA_FOLDER/affinity_scores.csv \
+	--N 12000 \
 	--files $ITER1_DATA_FOLDER/filtered_bids.csv \
 		$ITER1_DATA_FOLDER/constraints/conflict_constraints.csv
 fi

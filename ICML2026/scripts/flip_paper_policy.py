@@ -25,13 +25,17 @@ if __name__ == "__main__":
     policy_b_indices = submission_df[submission_df['policy'] == 'This submission allows Policy B.'].index
     num_papers_to_flip = int(len(policy_b_indices) * flip_rate)
     papers_to_flip = np.random.default_rng(42).choice(policy_b_indices, size=num_papers_to_flip, replace=False)
+
+    # get experimented df
+    experimented_papers = submission_df.loc[policy_b_indices]
+    experimented_papers.loc[papers_to_flip, 'policy'] = 'This submission requires Policy A.'
+
+    # substitute real df
     submission_df.loc[papers_to_flip, 'policy'] = 'This submission requires Policy A.'
-
-    # get the submission ids of flipped papers
-    flipped_submission_ids = submission_df.loc[papers_to_flip, 'submission']
-
+    
     # save the updated submission file
     submission_df.to_csv(args.submission, index=False)
-    flipped_submission_ids.to_csv("/".join(args.submission.split("/")[:-1]) + "/flipped_submission_ids.csv", index=False)
+    experimented_papers.to_csv("/".join(args.submission.split("/")[:-1]) + "/flipped_submissions.csv", index=False)
+    # flipped_submission_ids.to_csv("/".join(args.submission.split("/")[:-1]) + "/flipped_submission_ids.csv", index=False)
 
     print(f"Flipped {len(papers_to_flip)} papers from Policy B to Policy A")

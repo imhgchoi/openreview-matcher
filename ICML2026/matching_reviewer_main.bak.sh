@@ -67,6 +67,7 @@ export FLIP_RATE=0.1 # Ratio of "Okay with Policy B" Papers to be flipped to Pol
 export FILTER_UNREGISTERED=True # Filter out unregistered reviewers (Set to False for testing)
 export COUNTRY_CONSTRAINTS=True # Use country constraints
 export QUALITY_CONSTRAINTS=True # Use quality constraints
+export PREPROCESS_DATA=True # Preprocess data
 
 # ICML26: TODO - check Q values
 export Q=.7
@@ -106,7 +107,7 @@ export OPENREVIEW_PASSWORD=''
 
 # ---------------------------- Do not edit these variables ----------------------------
 
-export GROUP="Reviewers_Position"
+export GROUP="Reviewers_Main"
 
 export MAX_PAPERS=5 # Maximum number of papers each reviewer can review
 export NUM_REVIEWS=4 # Number of reviewers per paper
