@@ -117,7 +117,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(figsize=(10, 6))
     num_paper_per_reviewer = num_paper_per_reviewer + [0] * unassigned_reviewers_num
-    n, bins, patches = ax.hist(num_paper_per_reviewer, bins=20, range=(0, 5), edgecolor='black', linewidth=0.5, alpha=0.7)
+    n, bins, patches = ax.hist(num_paper_per_reviewer, bins=20, range=(0, 6), edgecolor='black', linewidth=0.5, alpha=0.7)
 
     # Add count labels on top of each bar
     for i, count in enumerate(n):
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     mean_of_num_positive_bids_per_reviewer = np.mean(num_positive_bids_per_reviewer)
     fig, ax = plt.subplots(figsize=(10, 6))
-    n, bins, patches = ax.hist(num_positive_bids_per_reviewer, bins=20, range=(0, 5), edgecolor='black', linewidth=0.5, alpha=0.7)
+    n, bins, patches = ax.hist(num_positive_bids_per_reviewer, bins=20, range=(0, 6), edgecolor='black', linewidth=0.5, alpha=0.7)
     # Add count labels on top of each bar
     for i, count in enumerate(n):
         if count > 0:  # Only label bars with counts > 0

@@ -20,8 +20,11 @@ if __name__ == '__main__':
     # N_subs = args.N
     # N_revs = int(args.N * 1.4)
 
-    N_subs = int(args.N * 1.0)
     N_revs = args.N
+    N_subs = int(args.N * 1.4)
+
+    # N_subs = int(args.N * 1.0)
+    # N_revs = args.N
 
     print("\nSubsampling files for debugging...")
 
