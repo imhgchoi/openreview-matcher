@@ -53,7 +53,6 @@ print_time() {
 	printf "Elapsed time: %02d:%02d:%02d\n" $((elapsed/3600)) $((elapsed%3600/60)) $((elapsed%60))
 }
 
-script_start_time=$(date +"%T")
 start_time=$SECONDS
 
 
@@ -65,7 +64,7 @@ start_time=$SECONDS
 
 
 export DEBUG=True # Used to subsample submission and reviewer data
-export DEBUG_N=4000
+export DEBUG_N=8000
 export ADD_EDGES=False # Prune edges from the graph
 
 export PRUNE_EDGES=True
@@ -85,7 +84,7 @@ export Q=.7
 
 
 # # Max score: 1, 1, .55
-# export Q=.55 # Upper bound on the marginal probability of each reviewer-paper pair being matched, for "Randomized" matcher
+# export Q=.55 # Upper bound on the marginal probability of each reviewer-paper pair being matched, for "Min" matcher
 # export SCORES_FILE=aggregated_scores_max.csv
 
 # # Least conservative: .75, .5, .55
@@ -311,6 +310,11 @@ else
 	export REVIEWER_FILE="reviewer_filtered.csv"
 fi
 
+
+
+script_start_time=$(date +"%T")
+
+
 if [ "$DEBUG" = "True" ]; then
 	printf "\n----------------------------------------"
 
@@ -452,7 +456,7 @@ if [ "$TYPE" = "1" ]; then
 		--max_papers_default $MAX_PAPERS \
 		--quota $DATA_FOLDER/quota.csv \
 		--num_reviewers $(($NUM_REVIEWS - 1)) \
-		--solver Randomized \
+		--solver MinMax \
 		--allow_zero_score_assignments \
 		--probability_limits $Q \
 		--output_folder $ITER1_ASSIGNMENTS_FOLDER
@@ -600,7 +604,7 @@ if [ "$TYPE" = "1" ]; then
 		--max_papers $DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
 		--num_reviewers 1 \
 		--num_alternates 1 \
-		--solver Randomized \
+		--solver MinMax \
 		--allow_zero_score_assignments \
 		--probability_limits $Q \
 		--output_folder $ITER1_ASSIGNMENTS_FOLDER
@@ -816,8 +820,7 @@ elif [ "$TYPE" = "2" ]; then
 				--slack $PRUNE_R
 		fi
 	fi
-
-
+	
 
 	start_time=$SECONDS
 	python -m matcher \
@@ -828,7 +831,7 @@ elif [ "$TYPE" = "2" ]; then
 		--max_papers_default $MAX_PAPERS \
 		--quota $DATA_FOLDER/quota.csv \
 		--num_reviewers $(($NUM_REVIEWS - 1)) \
-		--solver Randomized \
+		--solver MinMax \
 		--allow_zero_score_assignments \
 		--probability_limits $Q \
 		--output_folder $ITER2_ASSIGNMENTS_FOLDER
@@ -983,7 +986,7 @@ elif [ "$TYPE" = "2" ]; then
 		--max_papers $DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
 		--num_reviewers 1 \
 		--num_alternates 1 \
-		--solver Randomized \
+		--solver MinMax \
 		--allow_zero_score_assignments \
 		--probability_limits $Q \
 		--output_folder $ITER2_ASSIGNMENTS_FOLDER
@@ -1203,7 +1206,7 @@ elif [ "$ITER" = "3" ]; then
 		--max_papers_default $MAX_PAPERS \
 		--quota $DATA_FOLDER/quota.csv \
 		--num_reviewers $(($NUM_REVIEWS - 1)) \
-		--solver Randomized \
+		--solver MinMax \
 		--allow_zero_score_assignments \
 		--probability_limits $Q \
 		--output_folder $ITER3_ASSIGNMENTS_FOLDER
@@ -1360,7 +1363,7 @@ elif [ "$ITER" = "3" ]; then
 		--max_papers $DATA_FOLDER/constraints/reviewer_supply_after_matching.csv \
 		--num_reviewers 1 \
 		--num_alternates 1 \
-		--solver Randomized \
+		--solver MinMax \
 		--allow_zero_score_assignments \
 		--probability_limits $Q \
 		--output_folder $ITER3_ASSIGNMENTS_FOLDER

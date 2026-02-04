@@ -145,6 +145,8 @@ if args.solver == "FairIR":
     solver_class = "FairIR"
 if args.solver == "PerturbedMaximization":
     solver_class = "PerturbedMaximization"
+if args.solver == "FairSequence":
+    solver_class = "FairSequence"
 
 if not solver_class:
     raise ValueError("Invalid solver class {}".format(args.solver))
