@@ -10,6 +10,7 @@ if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--affinity", type=str, help="Affinity CSV file")
     argparser.add_argument("--bids", type=str, help="Bids CSV file")
+    argparser.add_argument("--output", type=str, help="Output CSV file")
     argparser.add_argument("--conflict", type=str, help="Conflict constraints CSV file")
     argparser.add_argument("--K", type=int, help="Top K edges to keep")
     argparser.add_argument("--slack", type=int, help="Slack")
@@ -72,4 +73,4 @@ if __name__ == "__main__":
     print(f'unioned: {len(edges)}')
 
     # save to csv
-    edges.to_csv(args.affinity, index=False, header=False)
+    edges.to_csv(args.output, index=False, header=False)

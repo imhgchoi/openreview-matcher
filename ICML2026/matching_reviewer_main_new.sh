@@ -351,7 +351,9 @@ if [ "$PRUNE_EDGES" = "True" ]; then
 		--bids $DATA_FOLDER/$BIDS_FILE \
 		--conflict $DATA_FOLDER/constraints/$AGG_CONSTRAINTS_FILE \
 		--K $PRUNE_K \
-		--slack $PRUNE_R
+		--slack $PRUNE_R \
+		--output $DATA_FOLDER/affinity_scores_pruned.csv 
+	export SCORES_FILE="affinity_scores_pruned.csv"
 fi
 
 
