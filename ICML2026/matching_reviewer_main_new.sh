@@ -64,14 +64,14 @@ start_time=$SECONDS
 
 
 export DEBUG=True # Used to subsample submission and reviewer data
-export DEBUG_N=1000
+export DEBUG_N=8000
 
 export PRUNE_EDGES=True
 export PRUNE_K=50
 export PRUNE_R=10
 
 
-export PREPROCESS_DATA=False # Preprocess data
+export PREPROCESS_DATA=True # Preprocess data
 export EXPERIMENT=True # Experimental Manipulation
 export FLIP_RATE=0.1 # Ratio of "Okay with Policy B" Papers to be flipped to Policy A.
 export FILTER_UNREGISTERED=True # Filter out unregistered reviewers (Set to False for testing)
@@ -115,13 +115,13 @@ export OPENREVIEW_PASSWORD=''
 
 # ---------------------------- Do not edit these variables ----------------------------
 
-export GROUP="Reviewers_Main_Full"
+export GROUP="Reviewers_Main_Debug"
 export TYPE=2 # 1: unconstrained / 2: hard policy constraint / 3: soft policy constraint
 
 export MAX_PAPERS=6 # Maximum number of papers each reviewer can review
 export NUM_REVIEWS=4 # Number of reviewers per paper
 export MIN_POS_BIDS=10 # minimum number of positive bids in order to take them into account
-export MATCHER_SOLVER="FairSequence"
+export MATCHER_SOLVER="MinMax"
 
 if [ -z "$SLURM_JOB_NAME" ] && [ -z "$SLURM_JOB_ID" ]; then
     # Local execution (not running under SLURM or in an interactive session)
@@ -201,12 +201,10 @@ if [ "$PREPROCESS_DATA" = "True" ]; then
 	printf "\n----------------------------------------\n"
 
 
-	# TODO
-	# printf "\n\nFiltering out submissions to exclude..."
-	# python ICML2026/scripts/filter_submissions.py \
-	# 	--submission $DATA_FOLDER/$SUBMISSION_FILE \
-	# 	--to_exclude $DATA_FOLDER/$EXCLUDE_SUBMISSIONS_FILE \
-	# 	--output $DATA_FOLDER/$SUBMISSION_FILE
+	printf "Excluding desk-rejected submissions from full submission file..."
+	python ICML2026/scripts/exclude_submissions.py \
+		--final_submissions $DATA_FOLDER/submissions_after_deskreject.csv \
+		--submission $DATA_FOLDER/$SUBMISSION_FILE
 
 
 	# ICML26: Experimental Manipulation - Flip some papers from Policy B to Policy A
@@ -262,6 +260,13 @@ if [ "$PREPROCESS_DATA" = "True" ]; then
 		--exclude_reviewer_files $DATA_FOLDER/$EMERGENCY_REVIEWERS_FILE \
 						$DATA_FOLDER/$UNQUALIFIED_REVIEWERS_FILE \
 						$DATA_FOLDER/unregistered_reviewers.csv \
+		--files $DATA_FOLDER/$SCORES_FILE \
+			$DATA_FOLDER/$BIDS_FILE \
+			$DATA_FOLDER/constraints/$NORMAL_CONFLICTS_FILE
+
+	printf "\n\nExcluding desk-rejected submissions from scores, bids, and constraints..."
+	python ICML2026/scripts/exclude_submissions.py \
+		--final_submissions $DATA_FOLDER/submissions_after_deskreject.csv \
 		--files $DATA_FOLDER/$SCORES_FILE \
 			$DATA_FOLDER/$BIDS_FILE \
 			$DATA_FOLDER/constraints/$NORMAL_CONFLICTS_FILE

@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     args = argparser.parse_args()
 
-    print(f"\nKeeping only the positive bids from reviewers with at least {args.min_pos_bids} positive bids...")
+    print(f"\nKeeping only the bids from reviewers with at least {args.min_pos_bids} positive bids...")
 
     df = pd.read_csv(args.input, header=None, names=["paper_id", "reviewer_id", "bid"])
     # Convert bid column to numeric, coercing any non-numeric values to NaN
