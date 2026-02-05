@@ -12,7 +12,7 @@ import random
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--reviewer", type=str, help="Submission file")
-    argparser.add_argument("--output", nargs='+', type=str, help="Output file")
+    argparser.add_argument("--output", type=str, help="Output file")
     argparser.add_argument("--filter_unregistered", type=str, help="Filter out unregistered reviewers")
 
     args = argparser.parse_args()
@@ -27,14 +27,14 @@ if __name__ == "__main__":
     
     if args.filter_unregistered == "True":
         # save the updated reviewer file and unregistered reviewers
-        reviewer_df.to_csv(args.output[0], index=False)
-        unregistered_reviewer_df.to_csv(args.output[1], index=False)
+        reviewer_df.to_csv(args.reviewer, index=False)
+        unregistered_reviewer_df.to_csv(args.output, index=False)
 
         print(f"Removed {len(unregistered_reviewer_df)} reviewers that have not registered")
 
     else : # This is for testing only - unregistered reviewers should be filtered out in actual matching
-        orig_reviewer_df.to_csv(args.output[0], index=False)
-        unregistered_reviewer_df.iloc[:0].to_csv(args.output[1], index=False)
+        orig_reviewer_df.to_csv(args.reviewer, index=False)
+        unregistered_reviewer_df.iloc[:0].to_csv(args.output, index=False)
 
         print("Did not filter out unregistered reviewers for testing purposes")
 

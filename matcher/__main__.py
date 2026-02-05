@@ -173,6 +173,8 @@ for score_file in args.scores:
             paper_id = row[0].strip()
             profile_id = row[1].strip()
             score = row[2].strip()
+            
+
             if score == '': # This means the reviewer bidded "Conflict" for the paper -- add this to the constraints
                 conflict_bids.append((paper_id, profile_id, -1))
                 continue

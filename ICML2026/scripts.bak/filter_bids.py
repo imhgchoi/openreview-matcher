@@ -22,7 +22,7 @@ if __name__ == "__main__":
     print("Converting bid values to numeric...")
     bid_to_num = {
         "Very Low": -1,
-        "Low": -0.5,
+        "Low": -0.9,
         "Neutral": 0,
         "High": 0.9,
         "Very High": 1,

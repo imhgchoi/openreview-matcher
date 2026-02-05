@@ -63,8 +63,8 @@ start_time=$SECONDS
 # -------------------------------- Edit these variables --------------------------------
 
 
-export DEBUG=False # Used to subsample submission and reviewer data
-export DEBUG_N=4000
+export DEBUG=True # Used to subsample submission and reviewer data
+export DEBUG_N=8000
 export ADD_EDGES=False # Prune edges from the graph
 
 export PRUNE_EDGES=True
@@ -72,12 +72,12 @@ export PRUNE_K=50
 export PRUNE_R=10
 
 
-export PREPROCESS_DATA=True # Preprocess data
+export PREPROCESS_DATA=False # Preprocess data
 export EXPERIMENT=True # Experimental Manipulation
 export FLIP_RATE=0.1 # Ratio of "Okay with Policy B" Papers to be flipped to Policy A.
 export FILTER_UNREGISTERED=True # Filter out unregistered reviewers (Set to False for testing)
 export COUNTRY_CONSTRAINTS=True # Use country constraints
-export QUALITY_CONSTRAINTS=True # Use quality constraints
+export QUALITY_CONSTRAINTS=False # Use quality constraints
 
 
 export Q=.7
@@ -116,7 +116,7 @@ export OPENREVIEW_PASSWORD=''
 
 # ---------------------------- Do not edit these variables ----------------------------
 
-export GROUP="Reviewers_Main_Test"
+export GROUP="Reviewers_Main_Debug"
 export TYPE=2 # 1: unconstrained / 2: hard policy constraint / 3: soft policy constraint
 
 export MAX_PAPERS=6 # Maximum number of papers each reviewer can review
@@ -434,7 +434,24 @@ if [ "$TYPE" = "1" ]; then
 				--num_papers $(($MAX_PAPERS + 1)) \
 				--K $PRUNE_K \
 				--slack $PRUNE_R
+
+			start_time=$SECONDS
+			python -m matcher \
+				--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
+				--weights 1 1 \
+				--constraints $DATA_FOLDER/constraints/conflict_constraints.csv \
+				--min_papers_default 0 \
+				--max_papers_default $MAX_PAPERS \
+				--quota $DATA_FOLDER/quota.csv \
+				--num_reviewers $(($NUM_REVIEWS - 1)) \
+				--solver MinMax \
+				--allow_zero_score_assignments \
+				--probability_limits $Q \
+				--output_folder $ITER1_ASSIGNMENTS_FOLDER
+
 		else
+			printf "$MAX_PAPERS\n"
+			exit
 			python ICML2026/scripts/prune_edges.py \
 				--affinity $DATA_FOLDER/affinity_scores.csv \
 				--bids $DATA_FOLDER/filtered_bids.csv \
@@ -443,23 +460,22 @@ if [ "$TYPE" = "1" ]; then
 				--num_papers $MAX_PAPERS \
 				--K $PRUNE_K \
 				--slack $PRUNE_R
+
+			start_time=$SECONDS
+			python -m matcher \
+				--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
+				--weights 1 1 \
+				--constraints $DATA_FOLDER/constraints/conflict_constraints.csv \
+				--min_papers_default 0 \
+				--max_papers_default $(($MAX_PAPERS - 1)) \
+				--quota $DATA_FOLDER/quota.csv \
+				--num_reviewers $(($NUM_REVIEWS - 1)) \
+				--solver MinMax \
+				--allow_zero_score_assignments \
+				--probability_limits $Q \
+				--output_folder $ITER1_ASSIGNMENTS_FOLDER
 		fi
 	fi
-
-
-	start_time=$SECONDS
-	python -m matcher \
-		--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
-		--weights 1 1 \
-		--constraints $DATA_FOLDER/constraints/conflict_constraints.csv \
-		--min_papers_default 0 \
-		--max_papers_default $MAX_PAPERS \
-		--quota $DATA_FOLDER/quota.csv \
-		--num_reviewers $(($NUM_REVIEWS - 1)) \
-		--solver MinMax \
-		--allow_zero_score_assignments \
-		--probability_limits $Q \
-		--output_folder $ITER1_ASSIGNMENTS_FOLDER
 
 	sleep 10
 
@@ -809,6 +825,21 @@ elif [ "$TYPE" = "2" ]; then
 				--num_papers $(($MAX_PAPERS + 1)) \
 				--K $PRUNE_K \
 				--slack $PRUNE_R
+
+			start_time=$SECONDS
+			python -m matcher \
+				--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
+				--weights 1 1 \
+				--constraints $DATA_FOLDER/constraints/agg_constraints.csv \
+				--min_papers_default 0 \
+				--max_papers_default $MAX_PAPERS \
+				--quota $DATA_FOLDER/quota.csv \
+				--num_reviewers $(($NUM_REVIEWS - 1)) \
+				--solver MinMax \
+				--allow_zero_score_assignments \
+				--probability_limits $Q \
+				--output_folder $ITER2_ASSIGNMENTS_FOLDER
+
 		else
 			python ICML2026/scripts/prune_edges.py \
 				--affinity $DATA_FOLDER/affinity_scores.csv \
@@ -818,24 +849,25 @@ elif [ "$TYPE" = "2" ]; then
 				--num_papers $MAX_PAPERS \
 				--K $PRUNE_K \
 				--slack $PRUNE_R
+
+			
+			start_time=$SECONDS
+			python -m matcher \
+				--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
+				--weights 1 1 \
+				--constraints $DATA_FOLDER/constraints/agg_constraints.csv \
+				--min_papers_default 0 \
+				--max_papers_default $(($MAX_PAPERS - 1)) \
+				--quota $DATA_FOLDER/quota.csv \
+				--num_reviewers $(($NUM_REVIEWS - 1)) \
+				--solver MinMax \
+				--allow_zero_score_assignments \
+				--probability_limits $Q \
+				--output_folder $ITER2_ASSIGNMENTS_FOLDER
+
 		fi
 	fi
 
-
-
-	start_time=$SECONDS
-	python -m matcher \
-		--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
-		--weights 1 1 \
-		--constraints $DATA_FOLDER/constraints/agg_constraints.csv \
-		--min_papers_default 0 \
-		--max_papers_default $MAX_PAPERS \
-		--quota $DATA_FOLDER/quota.csv \
-		--num_reviewers $(($NUM_REVIEWS - 1)) \
-		--solver MinMax \
-		--allow_zero_score_assignments \
-		--probability_limits $Q \
-		--output_folder $ITER2_ASSIGNMENTS_FOLDER
 
 	sleep 10
 
@@ -1185,6 +1217,20 @@ elif [ "$ITER" = "3" ]; then
 				--num_papers $(($MAX_PAPERS + 1)) \
 				--K $PRUNE_K \
 				--slack $PRUNE_R
+
+			start_time=$SECONDS
+			python -m matcher \
+				--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
+				--weights 1 1 \
+				--constraints $DATA_FOLDER/constraints/agg_constraints.csv \
+				--min_papers_default 0 \
+				--max_papers_default $MAX_PAPERS \
+				--quota $DATA_FOLDER/quota.csv \
+				--num_reviewers $(($NUM_REVIEWS - 1)) \
+				--solver MinMax \
+				--allow_zero_score_assignments \
+				--probability_limits $Q \
+				--output_folder $ITER3_ASSIGNMENTS_FOLDER
 		else
 			python ICML2026/scripts/prune_edges.py \
 				--affinity $DATA_FOLDER/affinity_scores.csv \
@@ -1194,23 +1240,22 @@ elif [ "$ITER" = "3" ]; then
 				--num_papers $MAX_PAPERS \
 				--K $PRUNE_K \
 				--slack $PRUNE_R
+			
+			start_time=$SECONDS
+			python -m matcher \
+				--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
+				--weights 1 1 \
+				--constraints $DATA_FOLDER/constraints/agg_constraints.csv \
+				--min_papers_default 0 \
+				--max_papers_default $(($MAX_PAPERS - 1)) \
+				--quota $DATA_FOLDER/quota.csv \
+				--num_reviewers $(($NUM_REVIEWS - 1)) \
+				--solver MinMax \
+				--allow_zero_score_assignments \
+				--probability_limits $Q \
+				--output_folder $ITER3_ASSIGNMENTS_FOLDER
 		fi
 	fi
-
-
-	start_time=$SECONDS
-	python -m matcher \
-		--scores $DATA_FOLDER/affinity_scores.csv $DATA_FOLDER/filtered_bids.csv \
-		--weights 1 1 \
-		--constraints $DATA_FOLDER/constraints/agg_constraints.csv \
-		--min_papers_default 0 \
-		--max_papers_default $MAX_PAPERS \
-		--quota $DATA_FOLDER/quota.csv \
-		--num_reviewers $(($NUM_REVIEWS - 1)) \
-		--solver MinMax \
-		--allow_zero_score_assignments \
-		--probability_limits $Q \
-		--output_folder $ITER3_ASSIGNMENTS_FOLDER
 
 	sleep 10
 

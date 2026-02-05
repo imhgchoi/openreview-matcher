@@ -7,7 +7,6 @@ if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--assignments", type=str, required=True)
     argparser.add_argument("--max_papers", type=int, help="Default max papers per reviewer (used if --quota not provided or for reviewers not in quota file)")
-    argparser.add_argument("--reviewers", type=str, help="Reviewers file")
     argparser.add_argument("--quota", type=str, help="Quota file (CSV with header row: user,quota) with individual quotas per reviewer")
     argparser.add_argument("--supply_output", type=str, required=True, help="Output file with reviewer supply")
     argparser.add_argument("--exhausted_reviewers_output", type=str, required=True, help="Output file with exhausted reviewers")
@@ -46,11 +45,6 @@ if __name__ == "__main__":
     with open(args.assignments, "r") as f:
         data = json.load(f)
 
-    reviewer_set = set()
-    if args.reviewers:
-        reviewers = pd.read_csv(args.reviewers)
-        reviewer_set = set(reviewers["reviewer_id"])
-
     # output is a CSV file with the following format:
     # reviewer_id, supply
 
@@ -70,10 +64,6 @@ if __name__ == "__main__":
     
     # Start with all reviewers who have assignments
     all_reviewers = set(assignment_counts.keys())
-    
-    # if reviewers file is provided, include all reviewers from reviewers file
-    if args.reviewers:
-        all_reviewers.update(reviewer_set)
     
     # If quota file is provided, include all reviewers from quota file
     if args.quota:
@@ -148,4 +138,5 @@ if __name__ == "__main__":
     print(f"Saving {len(constraints_df)} constraints for {nun_constraints_reviewers} reviewers to {args.remaining_reviewer_constraints_output}")
 
     constraints_df.to_csv(args.remaining_reviewer_constraints_output, index=False, header=False)
+
     print("\nDone!")

@@ -9,22 +9,12 @@ if __name__ == '__main__':
     arg_parser = argparse.ArgumentParser()
 
     arg_parser.add_argument('--scores', type=str, required=True)
-    arg_parser.add_argument('--reviewer', type=str, required=True)
-    arg_parser.add_argument('--submission', type=str, required=True)
-    arg_parser.add_argument('--qualification', type=str, required=True)
     arg_parser.add_argument('--N', type=int, default=1000)
     arg_parser.add_argument('--files', type=str, nargs="+", help="List of files to subsample")
 
     args = arg_parser.parse_args()
 
-    # N_subs = args.N
-    # N_revs = int(args.N * 1.4)
-
-    N_revs = args.N
-    N_subs = int(args.N * 1.4)
-
-    # N_subs = int(args.N * 1.0)
-    # N_revs = args.N
+    N = args.N
 
     print("\nSubsampling files for debugging...")
 
@@ -33,46 +23,31 @@ if __name__ == '__main__':
     submissions = scores[0].unique()
     reviewers = scores[1].unique()
     print(f"Loaded {len(submissions)} submissions and {len(reviewers)} reviewers.")
-    
-    print(f"\nSubsampling scores to {N_subs} submissions and {N_revs} reviewers...")
+
+    print(f"\nSubsampling scores to {N} submissions and {N} reviewers...")
     # Subsample the number of papers to N for debugging purposes
     try:
-        sampled_submissions = np.random.choice(submissions, N_subs, replace=False)
+        sampled_submissions = np.random.choice(submissions, N, replace=False)
     except ValueError:
-        print(f"Number of submissions is less than {N_subs}.")
+        print(f"Number of submissions is less than {N}.")
         sampled_submissions = submissions
     scores = scores[scores[0].isin(sampled_submissions)]
 
-    submission_df = pd.read_csv(args.submission)
-    submission_df = submission_df[submission_df['submission'].isin(sampled_submissions)]
-    submission_df.to_csv(args.submission.split(".")[0] + "_subsampled.csv", index=False)
-
     # Subsample the number of reviewers to N for debugging purposes
     try:
-        sampled_reviewers = np.random.choice(reviewers, N_revs, replace=False)
+        sampled_reviewers = np.random.choice(reviewers, N, replace=False)
     except ValueError:
-        print(f"Number of reviewers is less than {N_revs}.")
+        print(f"Number of reviewers is less than {N}.")
         sampled_reviewers = reviewers
     scores = scores[scores[1].isin(sampled_reviewers)]
-    scores.to_csv(args.scores.split(".")[0] + "_subsampled.csv", header=False, index=False)
+    scores.to_csv(args.scores, header=False, index=False)
 
-    reviewer_df = pd.read_csv(args.reviewer)
-    reviewer_df = reviewer_df[reviewer_df['user'].isin(sampled_reviewers)]
-    reviewer_df.to_csv(args.reviewer.split(".")[0] + "_subsampled.csv", index=False)
-
-    print(f"Subsampled {len(scores)} scores from {N_subs} submissions and {N_revs} reviewers.")
-
-    qualification_df = pd.read_csv(args.qualification)
-    qualification_df = qualification_df[qualification_df['reviewer_id'].isin(sampled_reviewers)]
-    qualification_df.to_csv(args.qualification.split(".")[0] + "_subsampled.csv", index=False)
-
+    print(f"Subsampled {len(scores)} scores from {N} submissions and {N} reviewers.")
 
     for file in args.files:
         print(f"\nSubsampling {file.split('/')[-1]}...")
         df = pd.read_csv(file, header=None)
         num_items = len(df)
-
-        file = file.split(".")[0] + "_subsampled.csv"
 
         if len(df.columns) == 3:
             # Three columns: submission, reviewer, score

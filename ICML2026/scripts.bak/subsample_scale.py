@@ -63,7 +63,7 @@ if __name__ == '__main__':
     print(f"Subsampled {len(scores)} scores from {N_subs} submissions and {N_revs} reviewers.")
 
     qualification_df = pd.read_csv(args.qualification)
-    qualification_df = qualification_df[qualification_df['reviewer_id'].isin(sampled_reviewers)]
+    qualification_df = qualification_df[qualification_df['user'].isin(sampled_reviewers)]
     qualification_df.to_csv(args.qualification.split(".")[0] + "_subsampled.csv", index=False)
 
 

@@ -13,7 +13,6 @@ if __name__ == "__main__":
     argparser.add_argument("--match_group", type=str, help="Match group")
     argparser.add_argument("--submission", type=str, help="Submission file")
     argparser.add_argument("--flip_rate", type=float, help="Ratio of papers to flip from Policy B to Policy A")
-    argparser.add_argument("--output", type=str, help="Output file")
 
     args = argparser.parse_args()
 
@@ -26,7 +25,7 @@ if __name__ == "__main__":
     policy_b_indices = submission_df[submission_df['policy'] == 'This submission allows Policy B.'].index
     num_papers_to_flip = int(len(policy_b_indices) * flip_rate)
     papers_to_flip = np.random.default_rng(42).choice(policy_b_indices, size=num_papers_to_flip, replace=False)
-    
+
     # get experimented df
     experimented_papers = submission_df.loc[policy_b_indices]
     experimented_papers.loc[papers_to_flip, 'policy'] = 'This submission requires Policy A.'
@@ -35,7 +34,8 @@ if __name__ == "__main__":
     submission_df.loc[papers_to_flip, 'policy'] = 'This submission requires Policy A.'
     
     # save the updated submission file
-    submission_df.to_csv(args.output, index=False)
-    experimented_papers.to_csv("/".join(args.output.split("/")[:-1]) + "/experimented_submissions.csv", index=False)
+    submission_df.to_csv(args.submission, index=False)
+    experimented_papers.to_csv("/".join(args.submission.split("/")[:-1]) + "/flipped_submissions.csv", index=False)
+    # flipped_submission_ids.to_csv("/".join(args.submission.split("/")[:-1]) + "/flipped_submission_ids.csv", index=False)
 
     print(f"Flipped {len(papers_to_flip)} papers from Policy B to Policy A")
