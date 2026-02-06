@@ -109,8 +109,8 @@ if __name__ == '__main__':
     if args.qualification:
         print("\nSplitting qualification.csv...")
         qual_df = pd.read_csv(args.qualification)
-        qual_g1 = qual_df[qual_df['user'].isin(revs_group1)]
-        qual_g2 = qual_df[qual_df['user'].isin(revs_group2)]
+        qual_g1 = qual_df[qual_df['reviewer_id'].isin(revs_group1)]
+        qual_g2 = qual_df[qual_df['reviewer_id'].isin(revs_group2)]
         qual_g1.to_csv(os.path.join(group1_dir, get_filename(args.qualification)), index=False)
         qual_g2.to_csv(os.path.join(group2_dir, get_filename(args.qualification)), index=False)
         print(f"  Group 1: {len(qual_g1)} entries")

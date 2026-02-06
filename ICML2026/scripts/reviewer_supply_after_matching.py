@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+import numpy as np
 import json
 import csv
 
@@ -8,10 +9,12 @@ if __name__ == "__main__":
     argparser.add_argument("--assignments", type=str, required=True)
     argparser.add_argument("--max_papers", type=int, help="Default max papers per reviewer (used if --quota not provided or for reviewers not in quota file)")
     argparser.add_argument("--reviewers", type=str, help="Reviewers file")
+    argparser.add_argument("--round2_affinity_scores", type=str, help="Round 2 affinity scores file")
     argparser.add_argument("--quota", type=str, help="Quota file (CSV with header row: user,quota) with individual quotas per reviewer")
     argparser.add_argument("--supply_output", type=str, required=True, help="Output file with reviewer supply")
     argparser.add_argument("--exhausted_reviewers_output", type=str, required=True, help="Output file with exhausted reviewers")
     argparser.add_argument("--remaining_reviewer_constraints_output", type=str, required=True, help="Output file with remaining reviewer constraints")
+    argparser.add_argument("--ratio", type=float)
 
     args = argparser.parse_args()
 
@@ -35,6 +38,7 @@ if __name__ == "__main__":
                     quota_map[reviewer_id] = quota
         print(f"Loaded quotas for {len(quota_map)} reviewers")
 
+
     # assignments is a json file with the following format:
     # {
     #     "paper_id": {
@@ -50,6 +54,21 @@ if __name__ == "__main__":
     if args.reviewers:
         reviewers = pd.read_csv(args.reviewers)
         reviewer_set = set(reviewers["reviewer_id"])
+
+
+    # ICML 26: add quota of 5 to half of the "qualified" reviewers
+    if args.round2_affinity_scores:
+        assert args.reviewers is not None
+        round2_affinity_scores = pd.read_csv(args.round2_affinity_scores, header=None)
+        round2_medium_revs = reviewers[reviewers['type'] == 'regular-medium']['reviewer_id'].unique().tolist()
+        round2_revs = round2_affinity_scores[1].unique().tolist()
+        round2_revs = list(set(round2_revs) - set(round2_medium_revs))
+        np.random.seed(42)
+        round2_revs_to_add_quota = np.random.choice(round2_revs, int(len(round2_revs) * args.ratio), replace=False)
+        
+        quota_map.update({reviewer_id: 5 for reviewer_id in round2_revs_to_add_quota})
+        print(f"Added quota of 5 to {len(round2_revs_to_add_quota)} reviewers")
+
 
     # output is a CSV file with the following format:
     # reviewer_id, supply

@@ -22,49 +22,72 @@ if __name__ == "__main__":
     assignments = pd.read_csv(args.assignments, header=None)
     submission_df = pd.read_csv(args.submission)
     reviewer_df = pd.read_csv(args.reviewer)
-
+    
     unique_reviewers_assigned = list(set(assignments.loc[:,1].tolist()))
+    unique_reviewers_total = reviewer_df.user.unique().tolist()
 
     experimented_reviewers = []
     final_policies = []
-    for assigned_reviewer in unique_reviewers_assigned:
+    for assigned_reviewer in unique_reviewers_total:
         submission_ids = assignments.loc[assignments.loc[:,1] == assigned_reviewer, 0].tolist()
-        submission_policies = submission_df.loc[submission_df['submission'].isin(submission_ids), 'policy'].tolist()
 
+        if len(submission_ids) == 0:
+            reviewer_policy = reviewer_df[reviewer_df['user'] == assigned_reviewer]['policy'].item()
 
-        if "This submission requires Policy A." in submission_policies: # there is at least one paper that requires Policy A
-
-            if reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy A.":
+            if reviewer_policy == "I strongly prefer Policy A.":
                 chosen_policy = "A"
                 assigned_policy = "A"
-                case_id = '(a)'
-            elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy B.":
-                chosen_policy = "B"
-                assigned_policy = "A"
-                case_id = '(b)'
-            elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I am okay with either A or B.":
-                chosen_policy = "A+B"
-                assigned_policy = "A"
-                case_id = '(c)'
-            else:
-                raise ValueError
-
-        else: # all papers allow Policy B
-
-            if reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy A.":
-                chosen_policy = "A"
-                assigned_policy = "A"
-                case_id = '(a)'
-            elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy B.":
+                case_id = '(g)'
+            elif reviewer_policy == "I strongly prefer Policy B.":
                 chosen_policy = "B"
                 assigned_policy = "B"
-                case_id = '(d)'
-            elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I am okay with either A or B.":
+                case_id = '(h)'
+            elif reviewer_policy ==  "I am okay with either A or B.":
                 chosen_policy = "A+B"
                 assigned_policy = None
                 experimented_reviewers.append(assigned_reviewer)
             else:
                 raise ValueError
+
+        else:
+
+            submission_policies = submission_df.loc[submission_df['submission'].isin(submission_ids), 'policy'].tolist()
+
+
+            if "This submission requires Policy A." in submission_policies: # there is at least one paper that requires Policy A
+
+                if reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy A.":
+                    chosen_policy = "A"
+                    assigned_policy = "A"
+                    case_id = '(a)'
+                elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy B.":
+                    raise Warning(f"Reviewer {assigned_reviewer} strongly prefers Policy B, but the assignment requires Policy A.")
+                    chosen_policy = "B"
+                    assigned_policy = "A"
+                    case_id = '(b)'
+                elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I am okay with either A or B.":
+                    chosen_policy = "A+B"
+                    assigned_policy = "A"
+                    case_id = '(c)'
+                else:
+                    raise ValueError
+
+            else: # all papers allow Policy B
+
+                if reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy A.":
+                    chosen_policy = "A"
+                    assigned_policy = "A"
+                    case_id = '(a)'
+                elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I strongly prefer Policy B.":
+                    chosen_policy = "B"
+                    assigned_policy = "B"
+                    case_id = '(d)'
+                elif reviewer_df.loc[reviewer_df['user'] == assigned_reviewer].policy.item() == "I am okay with either A or B.":
+                    chosen_policy = "A+B"
+                    assigned_policy = None
+                    experimented_reviewers.append(assigned_reviewer)
+                else:
+                    raise ValueError
 
         
         if assigned_policy is not None:
